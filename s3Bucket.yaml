@@ -1,0 +1,160 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: A sample template
+
+Parameters:
+  MyBucketName:
+    Type: String
+    Description: "Enter a DNS-compliant name for the S3 Bucket (only lowercase letters, numbers, and hyphens, 3-63 characters)."
+    AllowedPattern: "^[a-z0-9.-]{3,63}$"
+    ConstraintDescription: "Bucket names must be DNS-compliant: only lowercase letters, numbers, and hyphens, 3-63 characters long."
+
+Resources:    
+ # MyS3BucketAgainNew:
+  #  Type: AWS::S3::Bucket
+   # Properties:
+    #  BucketName: mys3bucketagainnew
+      
+  MyS3BucketNew:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref MyBucketName
+      
+      ##BucketEncryption:                         #using KMS key for bucket encryption instead of uding default AWS key.
+        #ServerSideEncryptionConfiguration:
+          #- ServerSideEncryptionByDefault:
+              #SSEAlgorithm: 'aws:kms'
+              #KMSMasterKeyID: arn:aws:kms:ap-south-1:975050076353:key/66a8e592-ae38-4392-8180-c110907acf20
+            #BucketKeyEnabled: True #
+      VersioningConfiguration:
+        Status: Enabled
+        
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true                         # This blocks public access.
+        IgnorePublicAcls: true                        # This blocks public access.
+        BlockPublicPolicy: true                         # This blocks public access.
+        RestrictPublicBuckets: true                     # This blocks public access.
+        
+      
+        
+      LifecycleConfiguration:
+        Rules:
+          - Id: MoveLogsToStandardIA
+            Status: Enabled
+            Prefix: "backups/"  # Use 'Prefix' directly instead of 'Filter'
+            Transitions:
+              - StorageClass: STANDARD_IA
+                TransitionInDays: 60
+              - StorageClass: GLACIER
+                TransitionInDays: 180
+                
+          - Id: MoveLogsToGlacier
+            Status: Enabled
+            Prefix: "logs/"  # Use 'Prefix' directly instead of 'Filter'
+            Transitions:
+              - StorageClass: GLACIER
+                TransitionInDays: 30
+                
+          - Id: DeleteOldVersions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+              
+      Tags:
+        - Key: "BU"
+          Value: "ERAS"
+        - Key: "CostCenter"
+          Value: 18654
+         
+         
+  BucketPolicyForLtiBucket:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref MyS3BucketNew
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+              #AWS: arn:aws:iam::975050076353:root  # Replace with your AWS Account ID
+            Action: "s3:GetObject"
+            Resource: arn:aws:s3:::mys3bucketnewlti/child_nested_stack_code.yml
+            
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: s3:GetObject
+            Resource: arn:aws:s3:::mys3bucketnewlti/child_nested_stack_code.yml
+
+            
+                          
+  MyS3BucketNewForLogging:                          #bucket for logging
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: mys3bucketnewforlogging
+      #BucketEncryption:                         #using KMS key for bucket encryption instead of uding default AWS key.
+        #ServerSideEncryptionConfiguration:
+         # - ServerSideEncryptionByDefault:
+          #    SSEAlgorithm: 'aws:kms'
+           #   KMSMasterKeyID: arn:aws:kms:ap-south-1:975050076353:key/66a8e592-ae38-4392-8180-c110907acf20
+           # BucketKeyEnabled: True
+      VersioningConfiguration:
+        Status: Enabled  
+      Tags:
+        - Key: "BU"
+          Value: "ERAS"
+        - Key: "CostCenter"
+          Value: 18654 
+
+
+  S3LoggingBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref MyS3BucketNewForLogging                  # this should be source or target bucket, its a doubt.
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:PutObject'
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Resource: !Join                                             # logging bucket
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref MyS3BucketNewForLogging
+                - /*
+            Condition:
+              ArnLike:
+                'aws:SourceArn': !GetAtt 
+                  - MyS3BucketNew
+                  - Arn
+              StringEquals:
+                'aws:SourceAccount': !Sub '${AWS::AccountId}'           #bucket from where data will come
+
+          
+Outputs:
+
+  BucketURL:
+    Value: !Join ['', ["https://", !GetAtt MyS3BucketNew.DomainName]]
+    Export:
+      Name: !Join ['', [!Ref "AWS::StackName", "URL"]]
+
+  BucketARN:
+    Value: !GetAtt MyS3BucketNew.Arn
+    Export:
+      Name: !Join ['', [!Ref "AWS::StackName", "ARN"]]
+
+      
+  LoggingBucketURL:
+    Value: !Join ['', ["https://", !GetAtt MyS3BucketNewForLogging.DomainName]]
+    Export:
+      Name: !Join ['', [!Ref "AWS::StackName", "LoggingBucketURL"]]
+    
+      
+  LoggingBucketARN:
+    Value: !GetAtt MyS3BucketNewForLogging.Arn
+    Export:
+      Name: !Join ['', [!Ref "AWS::StackName", "LoggingBucketARN"]]    
+    
+      
+    
