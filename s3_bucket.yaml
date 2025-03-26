@@ -9,10 +9,10 @@ Parameters:
     ConstraintDescription: "Bucket names must be DNS-compliant: only lowercase letters, numbers, and hyphens, 3-63 characters long."
 
 Resources:    
- # MyS3BucketAgainNew:
-  #  Type: AWS::S3::Bucket
-   # Properties:
-    #  BucketName: mys3bucketagainnew
+  MyS3BucketAgainNew:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: mys3bucketagainnew
       
   MyS3BucketNew:
     Type: AWS::S3::Bucket
