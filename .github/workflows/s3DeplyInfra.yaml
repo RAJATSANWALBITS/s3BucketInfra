@@ -1,0 +1,193 @@
+name: Oracle-Sales-s3Bucket-Deploy
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    
+  workflow_dispatch:
+    inputs:
+      choice:
+        description: 'Is evaluation needed. Seriously ?'
+        type: choice
+        options:
+          - yes
+          - no
+
+jobs:
+  Template-Validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Template_Validation
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ vars.AWS_REGION }}    
+          aws cloudformation validate-template --template-body file://s3_bucket.yaml
+           
+
+  # This workflow contains a single job called "build"
+  Eval-Create-Changeset:
+    needs: [ Template-Validation ]
+    if: (github.events.inputs.choice == 'yes')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+  Eval-Deploy-Changeset:
+    needs: [Eval-Create-Changeset ]
+    if: always() && (github.event.inputs.choice == 'yes' && needs.Eval-Create-Changeset.result == 'success') && (needs.Template-Validation.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run a one-line script
+        run: | 
+          echo "choice is ${{ github.event.inputs.choice }}" / ${{ inputs.choice }}
+
+          
+  Development-Create-changeset:
+    needs: [ Eval-Deploy-Changeset ]
+    #environment: development
+    if: always() && ( needs.Eval-Create-Changeset.result == 'skipped' ||  needs.Eval-Deploy-Changeset.result == 'success') && ( needs.Template-Validation.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run a one-line script
+        run: | 
+           echo "Environment secrets Aws Access Key value is ${{ secrets.AWS_ACCESS_KEY_ID }}" 
+           echo "Region is: ${{ vars.AWS_REGION }}"
+           echo "choice is ${{ github.event.inputs.choice }}" / ${{ inputs.choice }}
+
+          
+  Development-Deploy-changeset:
+    needs: [ Development-Create-changeset ]
+    #environment: development
+    if: always() && (needs.Development-Create-changeset.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run a one-line script
+        run: echo Hello, world!
+ 
+
+  Ftest-Create-Changeset:
+    needs: [ Development-Deploy-changeset ]
+    #environment: ftest
+    if: always() && (needs.Development-Deploy-changeset.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+
+
+  Ftest-Deploy-changeset:
+    needs: [ Ftest-Create-Changeset ]
+    #environment: ftest
+    if: always() && (needs.Ftest-Create-Changeset.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run a one-line script
+        run: echo Hello, world!
+ 
+
+
+
+  Stage-Create-Changeset:
+    needs: [ Ftest-Deploy-changeset ]
+    #environment: stage
+    if: always() && (needs.Ftest-Deploy-changeset.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+
+
+  Stage-Deploy-changeset:
+    needs: [ Stage-Create-Changeset ]
+    #environment: stage
+    if: always() && (needs.Stage-Create-Changeset.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+
+
+
+  Ptest-Create-Changeset:
+    needs: [ Stage-Deploy-changeset ]
+    #environment: ptest
+    if: always() && (needs.Stage-Deploy-changeset.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+
+
+  Ptest-Deploy-changeset:
+    needs: [ Ptest-Create-Changeset ]
+    #environment: ptest
+    if: always() && (needs.Ptest-Create-Changeset.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run a one-line script
+        run: echo Hello, world!
+
+
+
+  Prod-Create-Changeset:
+    needs: [ Ptest-Deploy-changeset ]
+    environment: production
+    if: always() && (needs.Ptest-Deploy-changeset.result == 'success')
+    runs-on: ubuntu-latest
+    outputs:
+      GLOBAL_CHANGE_SET_NAME: ${{ steps.generate_name.outputs.CHANGE_SET_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Variable Print
+        id: generate_name
+        run: | 
+          CHANGE_SET_NAME="change-set-$(uuidgen | cut -c1-8)"
+          echo "CHANGE_SET_NAME=$CHANGE_SET_NAME" >> $GITHUB_ENV
+          echo "CHANGE_SET_NAME=$CHANGE_SET_NAME" >> $GITHUB_OUTPUT
+          
+      - name: Configure AWS Credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ vars.AWS_REGION }}    
+          aws cloudformation create-change-set --stack-name s3Bucket --change-set-name ${{env.CHANGE_SET_NAME}} --template-body file://s3_bucket.yaml --parameters ParameterKey=MyBucketName,UsePreviousValue=true
+          echo "Waiting for change set to be created successfully."
+          aws cloudformation wait change-set-create-complete --stack-name s3Bucket --change-set-name ${{ env.CHANGE_SET_NAME }}
+          echo "change set created !!"
+          aws cloudformation describe-change-set --output table --color on --stack-name s3Bucket --change-set-name ${{env.CHANGE_SET_NAME}}
+          
+  Prod-Deploy-changeset:
+    needs: [ Prod-Create-Changeset ]
+    environment: production
+    if: always() && (needs.Prod-Create-Changeset.result == 'success')
+    runs-on: ubuntu-latest
+    steps:    
+      - uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ vars.AWS_REGION }}    
+          echo "Printing the Global variable - ${{ needs.generate-name.outputs.GLOBAL_CHANGE_SET_NAME }}"
+          aws cloudformation execute-change-set --change-set-name ${{ needs.Prod-Create-Changeset.outputs.GLOBAL_CHANGE_SET_NAME }} --stack-name s3Bucket
+          aws cloudformation wait stack-update-complete --stack-name s3Bucket
+          echo "Change set execution completed successfully!"
+ 
