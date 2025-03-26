@@ -48,109 +48,13 @@ jobs:
           echo "choice is ${{ github.event.inputs.choice }}" / ${{ inputs.choice }}
 
           
-  Development-Create-changeset:
-    needs: [ Eval-Deploy-Changeset ]
-    #environment: development
-    if: always() && ( needs.Eval-Create-Changeset.result == 'skipped' ||  needs.Eval-Deploy-Changeset.result == 'success') && ( needs.Template-Validation.result == 'success')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run a one-line script
-        run: | 
-           echo "Environment secrets Aws Access Key value is ${{ secrets.AWS_ACCESS_KEY_ID }}" 
-           echo "Region is: ${{ vars.AWS_REGION }}"
-           echo "choice is ${{ github.event.inputs.choice }}" / ${{ inputs.choice }}
-
-          
-  Development-Deploy-changeset:
-    needs: [ Development-Create-changeset ]
-    #environment: development
-    if: always() && (needs.Development-Create-changeset.result == 'success')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run a one-line script
-        run: echo Hello, world!
- 
-
-  Ftest-Create-Changeset:
-    needs: [ Development-Deploy-changeset ]
-    #environment: ftest
-    if: always() && (needs.Development-Deploy-changeset.result == 'success')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-
-
-  Ftest-Deploy-changeset:
-    needs: [ Ftest-Create-Changeset ]
-    #environment: ftest
-    if: always() && (needs.Ftest-Create-Changeset.result == 'success')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run a one-line script
-        run: echo Hello, world!
- 
-
-
-
-  Stage-Create-Changeset:
-    needs: [ Ftest-Deploy-changeset ]
-    #environment: stage
-    if: always() && (needs.Ftest-Deploy-changeset.result == 'success')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-
-
-  Stage-Deploy-changeset:
-    needs: [ Stage-Create-Changeset ]
-    #environment: stage
-    if: always() && (needs.Stage-Create-Changeset.result == 'success')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-
-
-
-  Ptest-Create-Changeset:
-    needs: [ Stage-Deploy-changeset ]
-    #environment: ptest
-    if: always() && (needs.Stage-Deploy-changeset.result == 'success')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-
-
-  Ptest-Deploy-changeset:
-    needs: [ Ptest-Create-Changeset ]
-    #environment: ptest
-    if: always() && (needs.Ptest-Create-Changeset.result == 'success')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run a one-line script
-        run: echo Hello, world!
-
+  
 
 
   Prod-Create-Changeset:
-    needs: [ Ptest-Deploy-changeset ]
+    needs: [ Eval-Deploy-Changeset ]
     environment: production
-    if: always() && (needs.Ptest-Deploy-changeset.result == 'success')
+    if: always() && (needs.Eval-Deploy-Changeset.result == 'success' || needs.Eval-Deploy-Changeset.result == 'skipped')
     runs-on: ubuntu-latest
     outputs:
       GLOBAL_CHANGE_SET_NAME: ${{ steps.generate_name.outputs.CHANGE_SET_NAME }}
