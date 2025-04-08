@@ -19,7 +19,7 @@ Conditions:
 Resources:
   marcosoffials3bucket:
     Type: AWS::S3::Bucket
-    Condition: IsProd
+    #Condition: IsProd
     Properties:
       BucketName: marcosoffials3bucket
       
