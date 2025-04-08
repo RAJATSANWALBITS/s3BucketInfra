@@ -54,7 +54,7 @@ jobs:
   Prod-Create-Changeset:
     needs: [ Eval-Deploy-Changeset ]
     environment: production
-    if: always() && (needs.Eval-Deploy-Changeset.result == 'success' || needs.Eval-Deploy-Changeset.result == 'skipped')
+    if: always() && (needs.Eval-Deploy-Changeset.result == 'success' || needs.Eval-Deploy-Changeset.result == 'skipped') && (needs.Template-Validation.result == 'success')
     runs-on: ubuntu-latest
     outputs:
       GLOBAL_CHANGE_SET_NAME: ${{ steps.generate_name.outputs.CHANGE_SET_NAME }}
