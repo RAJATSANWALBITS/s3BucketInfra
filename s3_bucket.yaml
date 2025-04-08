@@ -87,49 +87,49 @@ Resources:
 
             
                           
-  MyS3BucketNewForLogging:                          #bucket for logging
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: mys3bucketnewforlogging
+  #MyS3BucketNewForLogging:                          #bucket for logging
+    #Type: AWS::S3::Bucket
+    #Properties:
+      #BucketName: mys3bucketnewforlogging
       #BucketEncryption:                         #using KMS key for bucket encryption instead of uding default AWS key.
         #ServerSideEncryptionConfiguration:
          # - ServerSideEncryptionByDefault:
           #    SSEAlgorithm: 'aws:kms'
            #   KMSMasterKeyID: arn:aws:kms:ap-south-1:975050076353:key/66a8e592-ae38-4392-8180-c110907acf20
            # BucketKeyEnabled: True
-      VersioningConfiguration:
-        Status: Enabled  
-      Tags:
-        - Key: "BU"
-          Value: "ERAS"
-        - Key: "CostCenter"
-          Value: 18654 
+      #VersioningConfiguration:
+        #Status: Enabled  
+      #Tags:
+        #- Key: "BU"
+          #Value: "ERAS"
+        #- Key: "CostCenter"
+          #Value: 18654 
 
 
-  S3LoggingBucketPolicy:
-    Type: 'AWS::S3::BucketPolicy'
-    Properties:
-      Bucket: !Ref MyS3BucketNewForLogging                  # this should be source or target bucket, its a doubt.
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Action:
-              - 's3:PutObject'
-            Effect: Allow
-            Principal:
-              Service: logging.s3.amazonaws.com
-            Resource: !Join                                             # logging bucket
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref MyS3BucketNewForLogging
-                - /*
-            Condition:
-              ArnLike:
-                'aws:SourceArn': !GetAtt 
-                  - MyS3BucketNew
-                  - Arn
-              StringEquals:
-                'aws:SourceAccount': !Sub '${AWS::AccountId}'           #bucket from where data will come
+  #S3LoggingBucketPolicy:
+    #Type: 'AWS::S3::BucketPolicy'
+    #Properties:
+      #Bucket: !Ref MyS3BucketNewForLogging                  # this should be source or target bucket, its a doubt.
+      #PolicyDocument:
+        #Version: 2012-10-17
+        #Statement:
+          #- Action:
+              #- 's3:PutObject'
+            #Effect: Allow
+            #Principal:
+              #Service: logging.s3.amazonaws.com
+            #Resource: !Join                                             # logging bucket
+              #- ''
+              #- - 'arn:aws:s3:::'
+                #- !Ref MyS3BucketNewForLogging
+                #- /*
+            #Condition:
+              #ArnLike:
+                #'aws:SourceArn': !GetAtt 
+                  #- MyS3BucketNew
+                  #- Arn
+              #StringEquals:
+                #'aws:SourceAccount': !Sub '${AWS::AccountId}'           #bucket from where data will come
 
           
 Outputs:
