@@ -17,7 +17,7 @@ Conditions:
 
 
 Resources:
-  MyS3BucketAgainNew:
+  marcosoffials3bucket:
     Type: AWS::S3::Bucket
     Condition: IsProd
     Properties:
