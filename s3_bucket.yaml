@@ -17,11 +17,11 @@ Conditions:
 
 
 Resources:
-Condition: IsProd
-  MyS3BucketAgainNew:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: marcosoffials3bucket
+  Condition: IsProd
+    MyS3BucketAgainNew:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: marcosoffials3bucket
 Resources:    
   MyS3BucketAgainNew:
     Type: AWS::S3::Bucket
