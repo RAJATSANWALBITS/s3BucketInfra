@@ -8,7 +8,7 @@ Parameters:
     AllowedPattern: "^[a-z0-9.-]{3,63}$"
     ConstraintDescription: "Bucket names must be DNS-compliant: only lowercase letters, numbers, and hyphens, 3-63 characters long."
   Environment:
-    typr: string
+    type: string
     default: Production
 
 
