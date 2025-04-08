@@ -7,7 +7,21 @@ Parameters:
     Description: "Enter a DNS-compliant name for the S3 Bucket (only lowercase letters, numbers, and hyphens, 3-63 characters)."
     AllowedPattern: "^[a-z0-9.-]{3,63}$"
     ConstraintDescription: "Bucket names must be DNS-compliant: only lowercase letters, numbers, and hyphens, 3-63 characters long."
+  Environment:
+    typr: string
+    default: Production
 
+
+Conditions:
+  IsProd: !Equals [ !Ref Environment, "Production" ]
+
+
+Resources:
+Condition: IsProd
+  MyS3BucketAgainNew:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: marcosoffials3bucket
 Resources:    
   MyS3BucketAgainNew:
     Type: AWS::S3::Bucket
