@@ -145,16 +145,16 @@ Outputs:
       Name: !Join ['', [!Ref "AWS::StackName", "ARN"]]
 
       
-  LoggingBucketURL:
-    Value: !Join ['', ["https://", !GetAtt MyS3BucketNewForLogging.DomainName]]
-    Export:
-      Name: !Join ['', [!Ref "AWS::StackName", "LoggingBucketURL"]]
+  #LoggingBucketURL:
+   # Value: !Join ['', ["https://", !GetAtt MyS3BucketNewForLogging.DomainName]]
+    #Export:
+     # Name: !Join ['', [!Ref "AWS::StackName", "LoggingBucketURL"]]
     
       
-  LoggingBucketARN:
-    Value: !GetAtt MyS3BucketNewForLogging.Arn
-    Export:
-      Name: !Join ['', [!Ref "AWS::StackName", "LoggingBucketARN"]]    
+  #LoggingBucketARN:
+   # Value: !GetAtt MyS3BucketNewForLogging.Arn
+    #Export:
+     # Name: !Join ['', [!Ref "AWS::StackName", "LoggingBucketARN"]]    
     
       
     
