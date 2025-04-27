@@ -23,10 +23,7 @@ Resources:
     Properties:
       BucketName: marcosoffials3bucket
       
-  MyS3BucketAgainNew:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: mys3bucketagainnew
+
       
   MyS3BucketNew:
     Type: AWS::S3::Bucket
